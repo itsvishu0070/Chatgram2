@@ -9,7 +9,7 @@ export const sendMessageThunk = createAsyncThunk(
   async ({ recieverId, formData }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
-        `/message/send/${recieverId}`,
+        `/api/v1/message/send/${recieverId}`,
         formData,
         {
           headers: {
@@ -33,7 +33,7 @@ export const getMessageThunk = createAsyncThunk(
   async ({ recieverId }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(
-        `/message/get-messages/${recieverId}`
+        `/api/v1/message/get-messages/${recieverId}`
       );
       return response.data;
     } catch (error) {
