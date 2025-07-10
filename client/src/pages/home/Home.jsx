@@ -14,25 +14,36 @@ const Home = () => {
   const { isAuthenticated, userProfile } = useSelector(
     (state) => state.userReducer
   );
-  const { socket, onlineUsers } = useSelector((state) => state.socketReducer);
+  const { socket } = useSelector((state) => state.socketReducer);
 
+  // ✅ 1. Initialize socket when authenticated
   useEffect(() => {
-    if (!isAuthenticated) return;
-    dispatch(initializeSocket(userProfile?._id));
-  }, [isAuthenticated]);
+    if (!isAuthenticated || !userProfile?._id) return;
+    dispatch(initializeSocket(userProfile._id));
+  }, [isAuthenticated, userProfile?._id, dispatch]);
 
+  // ✅ 2. Set up socket listeners
   useEffect(() => {
     if (!socket) return;
-    socket.on("onlineUsers", (onlineUsers) => {
+
+    const handleOnlineUsers = (onlineUsers) => {
       dispatch(setOnlineUsers(onlineUsers));
-    });
-    socket.on("newMessage", (newMessage) => {
-      dispatch(setNewMessage(newMessage));
-    });
-    return () => {
-      socket.close();
     };
-  }, [socket]);
+
+    const handleNewMessage = (newMessage) => {
+      dispatch(setNewMessage(newMessage));
+    };
+
+    socket.on("onlineUsers", handleOnlineUsers);
+    socket.on("newMessage", handleNewMessage);
+
+    // ✅ 3. Cleanup to avoid duplicate listeners
+    return () => {
+      socket.off("onlineUsers", handleOnlineUsers);
+      socket.off("newMessage", handleNewMessage);
+      socket.close(); // Optional: Close socket on unmount if needed
+    };
+  }, [socket, dispatch]);
 
   return (
     <div className="flex">
