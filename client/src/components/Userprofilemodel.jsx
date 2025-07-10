@@ -63,8 +63,15 @@ const UserProfileModal = ({ isOpen, onClose, user }) => {
       }
 
       await dispatch(updateProfileThunk(form)).unwrap();
-      await dispatch(getUserProfileThunk());
+
+      // ✅ Fresh user data with updated avatar
+      const { responseData } = await dispatch(getUserProfileThunk()).unwrap();
+
       toast.success("Profile updated!");
+
+      // ✅ Force fresh avatar preview to break browser cache
+      setPreviewImage(`${responseData.avatar}?t=${Date.now()}`);
+
       setEditMode(false);
       onClose();
     } catch (err) {
@@ -72,9 +79,12 @@ const UserProfileModal = ({ isOpen, onClose, user }) => {
     }
   };
 
-  const avatarUrl = previewImage?.startsWith("http")
-    ? previewImage
-    : `${import.meta.env.VITE_SERVER_URL}${previewImage || ""}`;
+  const avatarUrl =
+    typeof previewImage === "string" && previewImage.startsWith("data:")
+      ? previewImage // local preview from upload
+      : previewImage?.startsWith("http")
+      ? previewImage
+      : `${import.meta.env.VITE_SERVER_URL}${previewImage || ""}`;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
@@ -152,7 +162,9 @@ const UserProfileModal = ({ isOpen, onClose, user }) => {
                     username: user.username,
                     avatar: user.avatar,
                   });
-                  setPreviewImage(user.avatar || "/default-avatar.png");
+
+                  // ✅ Also refresh preview again
+                  setPreviewImage(`${user.avatar}?t=${Date.now()}`);
                 }}
                 className="bg-red-500 hover:bg-red-600 py-2 px-4 rounded-lg text-sm font-semibold transition-all"
               >
