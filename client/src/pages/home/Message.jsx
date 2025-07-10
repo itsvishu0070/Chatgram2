@@ -29,7 +29,7 @@ const Message = ({ messageDetails }) => {
     filePath && typeof filePath === "string"
       ? filePath.startsWith("http")
         ? filePath
-        : `${baseUrl.replace(/\/$/, "")}/uploads/${filePath.replace(/^\//, "")}`
+        : `${baseUrl.replace(/\/$/, "")}/${filePath.replace(/^\//, "")}`
       : null;
 
   console.log("fileUrl →", fileUrl); // ✅ Debug
