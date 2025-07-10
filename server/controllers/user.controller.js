@@ -4,13 +4,13 @@ import { errorHandler } from "../utilities/errorHandler.utility.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-// Utility to attach cookie
+// =========================== attachCookie ===========================
 const attachCookie = (res, token) => {
   res.cookie("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "None",
-    maxAge: Number(process.env.COOKIE_EXPIRES) * 24 * 60 * 60 * 1000, // 7 days
+    secure: true, // ✅ Always true in production
+    sameSite: "None", // ✅ Required for cross-origin (Render <-> Vercel)
+    maxAge: Number(process.env.COOKIE_EXPIRES) * 24 * 60 * 60 * 1000,
   });
 };
 
@@ -39,8 +39,7 @@ export const register = asyncHandler(async (req, res, next) => {
     avatar,
   });
 
-  const tokenData = { _id: newUser._id };
-  const token = jwt.sign(tokenData, process.env.JWT_SECRET, {
+  const token = jwt.sign({ _id: newUser._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES,
   });
 
@@ -84,8 +83,7 @@ export const login = asyncHandler(async (req, res, next) => {
     );
   }
 
-  const tokenData = { _id: user._id };
-  const token = jwt.sign(tokenData, process.env.JWT_SECRET, {
+  const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES,
   });
 
@@ -128,8 +126,8 @@ export const logout = asyncHandler(async (req, res, next) => {
   res
     .cookie("token", "", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
+      secure: true, // ✅ Always true in prod
+      sameSite: "None", // ✅ Cross-origin clear
       expires: new Date(0),
     })
     .status(200)

@@ -1,42 +1,46 @@
-import { createSlice } from "@reduxjs/toolkit";
-import io from "socket.io-client";
 
-const initialState = {
-  socket: null,
-  onlineUsers: null,
-};
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import { toast } from "react-hot-toast";
+import { axiosInstance } from "../../../components/utitlities/axiosInstance";
 
-export const socketSlice = createSlice({
-  name: "socket",
-  initialState,
-  reducers: {
-    initializeSocket: (state, action) => {
-      const socket = io(import.meta.env.VITE_SERVER_URL, {
-        withCredentials: true,
-        transports: ["websocket"], // 👈 Force WebSocket to avoid polling issues
-        query: {
-          userId: action.payload,
-        },
-      });
+//  Send Message Thunk (supports text + file)
+export const sendMessageThunk = createAsyncThunk(
+  "message/send",
+  async ({ recieverId, formData }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(
+        `/api/v1/message/send/${recieverId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      const errorOutput = error?.response?.data?.errMessage || "Send failed";
+      toast.error(errorOutput);
+      return rejectWithValue(errorOutput);
+    }
+  }
+);
 
-      state.socket = socket;
-
-      // Optional debug listener
-      socket.on("connect", () => {
-        console.log("✅ Connected to socket server:", socket.id);
-      });
-
-      socket.on("connect_error", (err) => {
-        console.error("❌ Socket connection error:", err.message);
-      });
-    },
-
-    setOnlineUsers: (state, action) => {
-      state.onlineUsers = action.payload;
-    },
-  },
-});
-
-export const { initializeSocket, setOnlineUsers } = socketSlice.actions;
-
-export default socketSlice.reducer;
+// Get Messages Thunk
+export const getMessageThunk = createAsyncThunk(
+  "message/get",
+  async ({ recieverId }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(
+        `/api/v1/message/get-messages/${recieverId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      const errorOutput = error?.response?.data?.errMessage || "Fetch failed";
+      toast.error(errorOutput);
+      return rejectWithValue(errorOutput);
+    }
+  }
+);
