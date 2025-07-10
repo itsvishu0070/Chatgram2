@@ -22,38 +22,55 @@ const Message = ({ messageDetails }) => {
 
   const avatar = isSender ? userProfile?.avatar : selectedUser?.avatar;
 
-  const fileUrl = messageDetails?.file?.startsWith("http")
-    ? messageDetails.file
-    : `${import.meta.env.VITE_SERVER_URL}${messageDetails.file || ""}`;
+  const baseUrl = import.meta.env.VITE_SERVER_URL || "";
+  const filePath = messageDetails?.file || "";
 
-const renderFilePreview = () => {
-  if (!messageDetails?.file) return null;
+  const fileUrl = filePath.startsWith("http")
+    ? filePath
+    : `${baseUrl.replace(/\/$/, "")}/${filePath.replace(/^\//, "")}`;
 
-  const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(fileUrl);
-  const isPDF = /\.pdf$/i.test(fileUrl);
-  const isVideo = /\.(mp4|webm|ogg)$/i.test(fileUrl);
+  console.log("fileUrl →", fileUrl); // ✅ Debug log
 
-  if (isImage) {
-    return (
-      <img
-        src={fileUrl}
-        alt="Image attachment"
-        className="max-w-[200px] rounded-lg mt-2 border border-white/10"
-      />
-    );
-  }
+  const renderFilePreview = () => {
+    if (!messageDetails?.file) return null;
 
-  if (isVideo) {
-    return (
-      <video
-        controls
-        src={fileUrl}
-        className="max-w-[300px] mt-2 rounded-lg border border-white/10"
-      />
-    );
-  }
+    const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(fileUrl);
+    const isPDF = /\.pdf$/i.test(fileUrl);
+    const isVideo = /\.(mp4|webm|ogg)$/i.test(fileUrl);
 
-  if (isPDF) {
+    if (isImage) {
+      return (
+        <img
+          src={fileUrl}
+          alt="Image attachment"
+          className="max-w-[200px] rounded-lg mt-2 border border-white/10"
+        />
+      );
+    }
+
+    if (isVideo) {
+      return (
+        <video
+          controls
+          src={fileUrl}
+          className="max-w-[300px] mt-2 rounded-lg border border-white/10"
+        />
+      );
+    }
+
+    if (isPDF) {
+      return (
+        <a
+          href={fileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm underline text-blue-400 mt-2 inline-block"
+        >
+          📄 View PDF
+        </a>
+      );
+    }
+
     return (
       <a
         href={fileUrl}
@@ -61,22 +78,10 @@ const renderFilePreview = () => {
         rel="noopener noreferrer"
         className="text-sm underline text-blue-400 mt-2 inline-block"
       >
-        📄 View PDF
+        📎 Download Attachment
       </a>
     );
-  }
-
-  return (
-    <a
-      href={fileUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-sm underline text-blue-400 mt-2 inline-block"
-    >
-      📎 Download Attachment
-    </a>
-  );
-};
+  };
 
   return (
     <div
