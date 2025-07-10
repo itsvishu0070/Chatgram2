@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import moment from "moment";
@@ -17,14 +16,24 @@ const Message = ({ messageDetails }) => {
 
   const formattedTime = moment(messageDetails?.createdAt).format("hh:mm A");
 
-  const isSender = userProfile?._id === messageDetails?.senderId;
+  // ✅ FIXED: Check if senderId is an object or string
+  const isSender =
+    userProfile?._id === messageDetails?.senderId?._id ||
+    userProfile?._id === messageDetails?.senderId;
+
   const avatar = isSender ? userProfile?.avatar : selectedUser?.avatar;
 
-  // File preview handler
+  // ✅ FIXED: Full path for file (image, PDF, etc.)
+  const fileUrl = messageDetails?.file?.startsWith("http")
+    ? messageDetails.file
+    : `${import.meta.env.VITE_SERVER_URL || "http://localhost:5000"}${
+        messageDetails.file || ""
+      }`;
+
+  // ✅ File preview
   const renderFilePreview = () => {
     if (!messageDetails?.file) return null;
 
-    const fileUrl = messageDetails.file;
     const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(fileUrl);
     const isPDF = /\.pdf$/i.test(fileUrl);
 
@@ -51,7 +60,6 @@ const Message = ({ messageDetails }) => {
       );
     }
 
-    // For other file types
     return (
       <a
         href={fileUrl}
@@ -81,7 +89,7 @@ const Message = ({ messageDetails }) => {
         <time className="text-xs opacity-50">{formattedTime}</time>
       </div>
 
-      {/* Message bubble */}
+      {/* Message Bubble */}
       <div className="chat-bubble">
         {messageDetails?.message}
         {renderFilePreview()}
@@ -91,4 +99,3 @@ const Message = ({ messageDetails }) => {
 };
 
 export default Message;
-

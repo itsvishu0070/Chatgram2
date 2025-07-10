@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { IoIosSend } from "react-icons/io";
 import { useDispatch, useSelector } from "react-redux";
@@ -13,21 +12,22 @@ const SendMessage = () => {
   const [fileName, setFileName] = useState("");
 
   const handleSendMessage = () => {
-    if (!message.trim() && !file) return;
+    if ((!message.trim() && !file) || !selectedUser?._id) return;
 
     const form = new FormData();
-    form.append("message", message);
+    form.append("message", message.trim());
     if (file) {
-      form.append("file", file); // 🖼️ sending file
+      form.append("file", file);
     }
 
     dispatch(
       sendMessageThunk({
-        recieverId: selectedUser?._id,
+        recieverId: selectedUser._id,
         formData: form,
       })
     );
 
+    // Reset after sending
     setMessage("");
     setFile(null);
     setFileName("");
@@ -57,14 +57,14 @@ const SendMessage = () => {
           <input type="file" className="hidden" onChange={handleFileChange} />
         </label>
 
-        {/* Show selected file name */}
+        {/* File name */}
         {fileName && (
           <span className="text-xs text-gray-400 max-w-[100px] truncate">
             {fileName}
           </span>
         )}
 
-        {/* Message Input */}
+        {/* Message input */}
         <input
           type="text"
           placeholder="Type your message..."
@@ -74,7 +74,7 @@ const SendMessage = () => {
           onKeyDown={handleKeyDown}
         />
 
-        {/* Send Button */}
+        {/* Send button */}
         <button
           onClick={handleSendMessage}
           className="p-2 rounded-full bg-[#7480FF] hover:bg-[#8a96ff] transition-all duration-200 shadow-md active:scale-95"
@@ -87,6 +87,3 @@ const SendMessage = () => {
 };
 
 export default SendMessage;
-
-
-
