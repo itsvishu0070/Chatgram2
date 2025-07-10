@@ -4,43 +4,53 @@ import { axiosInstance } from "../../../components/utitlities/axiosInstance";
 
 export const loginUserThunk = createAsyncThunk(
   "user/login",
-  async ({ username, password }, { rejectWithValue }) => {
+  async ({ username, password }, { dispatch, rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/api/v1/user/login", {
-        username,
-        password,
-      });
+      await axiosInstance.post("/api/v1/user/login", { username, password });
+
+      // ✅ Fetch actual user from cookie
+      const response = await dispatch(getUserProfileThunk()).unwrap();
+
       toast.success("Login successful!");
-      return response.data;
+      return response;
     } catch (error) {
       console.error(error);
-      const errorOutput = error?.response?.data?.errMessage;
+      const errorOutput = error?.response?.data?.errMessage || "Login failed";
       toast.error(errorOutput);
       return rejectWithValue(errorOutput);
     }
   }
 );
 
+
 export const registerUserThunk = createAsyncThunk(
   "user/signup",
-  async ({ fullName, username, password, gender }, { rejectWithValue }) => {
+  async (
+    { fullName, username, password, gender },
+    { dispatch, rejectWithValue }
+  ) => {
     try {
-      const response = await axiosInstance.post("/api/v1/user/register", {
+      await axiosInstance.post("/api/v1/user/register", {
         fullName,
         username,
         password,
         gender,
       });
+
+      // ✅ Fetch actual user from cookie
+      const response = await dispatch(getUserProfileThunk()).unwrap();
+
       toast.success("Account created successfully!!");
-      return response.data;
+      return response;
     } catch (error) {
       console.error(error);
-      const errorOutput = error?.response?.data?.errMessage;
+      const errorOutput = error?.response?.data?.errMessage || "Signup failed";
       toast.error(errorOutput);
       return rejectWithValue(errorOutput);
     }
   }
 );
+
 
 export const logoutUserThunk = createAsyncThunk(
   "user/logout",

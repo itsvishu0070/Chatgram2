@@ -1,4 +1,3 @@
-
 import { createSlice } from "@reduxjs/toolkit";
 import {
   loginUserThunk,
@@ -6,7 +5,7 @@ import {
   registerUserThunk,
   getUserProfileThunk,
   getOtherUsersThunk,
-  updateProfileThunk, 
+  updateProfileThunk,
 } from "./user.thunk";
 
 const initialState = {
@@ -31,7 +30,7 @@ export const userSlice = createSlice({
       state.buttonLoading = true;
     });
     builder.addCase(loginUserThunk.fulfilled, (state, action) => {
-      state.userProfile = action.payload.responseData.user;
+      state.userProfile = action.payload.responseData;
       state.isAuthenticated = true;
       state.buttonLoading = false;
     });
@@ -45,7 +44,7 @@ export const userSlice = createSlice({
       state.buttonLoading = true;
     });
     builder.addCase(registerUserThunk.fulfilled, (state, action) => {
-      state.userProfile = action.payload.responseData.newUser;
+      state.userProfile = action.payload.responseData;
       state.isAuthenticated = true;
       state.buttonLoading = false;
     });
@@ -91,5 +90,3 @@ export const userSlice = createSlice({
 export const { setSelectedUser } = userSlice.actions;
 
 export default userSlice.reducer;
-
-

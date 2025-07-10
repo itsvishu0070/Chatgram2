@@ -4,6 +4,16 @@ import { errorHandler } from "../utilities/errorHandler.utility.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+// Utility to attach cookie
+const attachCookie = (res, token) => {
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "None",
+    maxAge: Number(process.env.COOKIE_EXPIRES) * 24 * 60 * 60 * 1000, // 7 days
+  });
+};
+
 // =========================== REGISTER ===========================
 export const register = asyncHandler(async (req, res, next) => {
   const { fullName, username, password, gender } = req.body;
@@ -34,23 +44,20 @@ export const register = asyncHandler(async (req, res, next) => {
     expiresIn: process.env.JWT_EXPIRES,
   });
 
-  res
-    .status(200)
-    .cookie("token", token, {
-      expires: new Date(
-        Date.now() + Number(process.env.COOKIE_EXPIRES) * 24 * 60 * 60 * 1000
-      ),
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
-    })
-    .json({
-      success: true,
-      responseData: {
-        newUser,
-        token,
+  attachCookie(res, token);
+
+  res.status(200).json({
+    success: true,
+    responseData: {
+      newUser: {
+        ...newUser.toObject(),
+        avatar: newUser.avatar?.startsWith("http")
+          ? newUser.avatar
+          : `${process.env.SERVER_URL}${newUser.avatar}`,
       },
-    });
+      token,
+    },
+  });
 });
 
 // =========================== LOGIN ===========================
@@ -82,23 +89,20 @@ export const login = asyncHandler(async (req, res, next) => {
     expiresIn: process.env.JWT_EXPIRES,
   });
 
-  res
-    .status(200)
-    .cookie("token", token, {
-      expires: new Date(
-        Date.now() + Number(process.env.COOKIE_EXPIRES) * 24 * 60 * 60 * 1000
-      ),
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
-    })
-    .json({
-      success: true,
-      responseData: {
-        user,
-        token,
+  attachCookie(res, token);
+
+  res.status(200).json({
+    success: true,
+    responseData: {
+      user: {
+        ...user.toObject(),
+        avatar: user.avatar?.startsWith("http")
+          ? user.avatar
+          : `${process.env.SERVER_URL}${user.avatar}`,
       },
-    });
+      token,
+    },
+  });
 });
 
 // =========================== GET PROFILE ===========================
@@ -106,22 +110,29 @@ export const getProfile = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
   const profile = await User.findById(userId);
 
+  if (!profile) return next(new errorHandler("User not found", 404));
+
   res.status(200).json({
     success: true,
-    responseData: profile,
+    responseData: {
+      ...profile.toObject(),
+      avatar: profile.avatar?.startsWith("http")
+        ? profile.avatar
+        : `${process.env.SERVER_URL}${profile.avatar}`,
+    },
   });
 });
 
 // =========================== LOGOUT ===========================
 export const logout = asyncHandler(async (req, res, next) => {
   res
-    .status(200)
     .cookie("token", "", {
-      expires: new Date(Date.now()),
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "None",
+      expires: new Date(0),
     })
+    .status(200)
     .json({
       success: true,
       message: "Logout successful!",
@@ -130,12 +141,18 @@ export const logout = asyncHandler(async (req, res, next) => {
 
 // =========================== GET OTHER USERS ===========================
 export const getOtherUsers = asyncHandler(async (req, res, next) => {
-
   const otherUsers = await User.find({ _id: { $ne: req.user._id } });
+
+  const usersWithFullAvatars = otherUsers.map((user) => ({
+    ...user.toObject(),
+    avatar: user.avatar?.startsWith("http")
+      ? user.avatar
+      : `${process.env.SERVER_URL}${user.avatar}`,
+  }));
 
   res.status(200).json({
     success: true,
-    responseData: otherUsers,
+    responseData: usersWithFullAvatars,
   });
 });
 
@@ -151,7 +168,6 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
 
   if (username && username !== currentUser.username) {
     const existingUser = await User.findOne({ username });
-
     if (existingUser && existingUser._id.toString() !== userId.toString()) {
       return next(new errorHandler("Username already taken", 400));
     }
@@ -164,9 +180,7 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
   const updateData = {
     ...(fullName && { fullName }),
     ...(username && { username }),
-    ...(avatarPath && {
-      avatar: `${process.env.SERVER_URL}${avatarPath}`,
-    }),
+    ...(avatarPath && { avatar: `${process.env.SERVER_URL}${avatarPath}` }),
   };
 
   const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
@@ -175,6 +189,11 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    responseData: updatedUser,
+    responseData: {
+      ...updatedUser.toObject(),
+      avatar: updatedUser.avatar?.startsWith("http")
+        ? updatedUser.avatar
+        : `${process.env.SERVER_URL}${updatedUser.avatar}`,
+    },
   });
 });
