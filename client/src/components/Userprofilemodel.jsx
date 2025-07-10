@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import {
@@ -45,11 +44,10 @@ const UserProfileModal = ({ isOpen, onClose, user }) => {
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      console.log("reader.result (preview):", reader.result);
-      setPreviewImage(reader.result); // preview
+      setPreviewImage(reader.result);
       setFormData((prev) => ({
         ...prev,
-        avatar: file, // upload
+        avatar: file,
       }));
     };
     reader.readAsDataURL(file);
@@ -74,6 +72,10 @@ const UserProfileModal = ({ isOpen, onClose, user }) => {
     }
   };
 
+  const avatarUrl = previewImage?.startsWith("http")
+    ? previewImage
+    : `${import.meta.env.VITE_SERVER_URL}${previewImage || ""}`;
+
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
       <div className="relative bg-[#0F111A] p-6 rounded-2xl w-[90%] max-w-md text-white shadow-2xl border border-white/10">
@@ -87,12 +89,8 @@ const UserProfileModal = ({ isOpen, onClose, user }) => {
         <div className="flex flex-col items-center space-y-3">
           <div className="relative flex flex-col items-center">
             <img
-              key={previewImage}
-              src={
-                previewImage
-                  ? `${previewImage}?t=${Date.now()}`
-                  : "/default-avatar.png"
-              }
+              key={avatarUrl}
+              src={`${avatarUrl}?t=${Date.now()}`}
               alt="avatar"
               className="w-24 h-24 rounded-full ring-4 ring-[#7480FF]/50 object-cover"
             />

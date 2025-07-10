@@ -14,7 +14,6 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
     file: req.file,
   });
 
-  // Handle file path properly
   const file = req.file
     ? `${process.env.SERVER_URL}/uploads/messages/${req.file.filename}`
     : null;
@@ -23,7 +22,6 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
     return next(new errorHandler("Message or file is required", 400));
   }
 
-  // Get or create conversation
   let conversation = await Conversation.findOne({
     participants: { $all: [senderId, receiverId] },
   });
@@ -34,7 +32,6 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
     });
   }
 
-  // Create new message
   const newMessage = await Message.create({
     senderId,
     receiverId,
@@ -42,13 +39,12 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
     file,
   });
 
-  // Push message into conversation
   if (newMessage) {
     conversation.messages.push(newMessage._id);
     await conversation.save();
   }
 
-  // Emit socket event
+  // Send message only to receiver
   const socketId = getSocketId(receiverId);
   if (socketId) {
     io.to(socketId).emit("newMessage", newMessage);

@@ -16,21 +16,16 @@ const Message = ({ messageDetails }) => {
 
   const formattedTime = moment(messageDetails?.createdAt).format("hh:mm A");
 
-  // ✅ FIXED: Check if senderId is an object or string
   const isSender =
     userProfile?._id === messageDetails?.senderId?._id ||
     userProfile?._id === messageDetails?.senderId;
 
   const avatar = isSender ? userProfile?.avatar : selectedUser?.avatar;
 
-  // ✅ FIXED: Full path for file (image, PDF, etc.)
   const fileUrl = messageDetails?.file?.startsWith("http")
     ? messageDetails.file
-    : `${import.meta.env.VITE_SERVER_URL || "http://localhost:5000"}${
-        messageDetails.file || ""
-      }`;
+    : `${import.meta.env.VITE_SERVER_URL}${messageDetails.file || ""}`;
 
-  // ✅ File preview
   const renderFilePreview = () => {
     if (!messageDetails?.file) return null;
 
@@ -77,19 +72,16 @@ const Message = ({ messageDetails }) => {
       ref={messageRef}
       className={`chat ${isSender ? "chat-end" : "chat-start"}`}
     >
-      {/* Avatar */}
       <div className="chat-image avatar">
         <div className="w-10 rounded-full">
           <img alt="user avatar" src={avatar} />
         </div>
       </div>
 
-      {/* Time */}
       <div className="chat-header">
         <time className="text-xs opacity-50">{formattedTime}</time>
       </div>
 
-      {/* Message Bubble */}
       <div className="chat-bubble">
         {messageDetails?.message}
         {renderFilePreview()}

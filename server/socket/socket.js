@@ -1,5 +1,3 @@
-
-
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -12,10 +10,10 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL, 
+    origin: process.env.CLIENT_URL,
+    credentials: true,
   },
 });
-
 
 const userSocketMap = {};
 
@@ -26,7 +24,6 @@ io.on("connection", (socket) => {
 
   userSocketMap[userId] = socket.id;
 
- 
   io.emit("onlineUsers", Object.keys(userSocketMap));
 
   socket.on("disconnect", () => {
@@ -35,8 +32,6 @@ io.on("connection", (socket) => {
   });
 });
 
-
 const getSocketId = (userId) => userSocketMap[userId];
-
 
 export { io, app, server, getSocketId };
