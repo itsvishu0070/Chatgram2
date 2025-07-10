@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { getUserProfileThunk } from "./store/slice/user/user.thunk";
@@ -23,7 +22,6 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* Protected Routes using Outlet */}
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Home />} />
         </Route>
