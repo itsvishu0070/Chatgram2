@@ -22,17 +22,20 @@ const Message = ({ messageDetails }) => {
 
   const avatar = isSender ? userProfile?.avatar : selectedUser?.avatar;
 
+  // ✅ Safe file URL construction
   const baseUrl = import.meta.env.VITE_SERVER_URL || "";
-  const filePath = messageDetails?.file || "";
+  const filePath = messageDetails?.file;
+  const fileUrl =
+    filePath && typeof filePath === "string"
+      ? filePath.startsWith("http")
+        ? filePath
+        : `${baseUrl.replace(/\/$/, "")}/${filePath.replace(/^\//, "")}`
+      : null;
 
-  const fileUrl = filePath.startsWith("http")
-    ? filePath
-    : `${baseUrl.replace(/\/$/, "")}/${filePath.replace(/^\//, "")}`;
-
-  console.log("fileUrl →", fileUrl); // ✅ Debug log
+  console.log("fileUrl →", fileUrl); // ✅ Debug
 
   const renderFilePreview = () => {
-    if (!messageDetails?.file) return null;
+    if (!fileUrl) return null;
 
     const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(fileUrl);
     const isPDF = /\.pdf$/i.test(fileUrl);

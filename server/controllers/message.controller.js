@@ -8,6 +8,8 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
   const senderId = req.user._id;
   const receiverId = req.params.receiverId;
   const message = req.body.message?.trim() || "";
+  const msg = await Message.findOne({ file: { $ne: null } });
+  console.log("📦 Sample message from DB:", msg);
 
   console.log("📩 Incoming request:", {
     body: req.body,
