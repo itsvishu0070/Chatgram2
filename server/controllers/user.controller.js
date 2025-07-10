@@ -172,14 +172,15 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
   }
 
   const avatarPath = req.file
-    ? `/uploads/avatars/${req.file.filename}`
+    ? `uploads/avatars/${req.file.filename}` // ✅ No leading slash, no SERVER_URL
     : undefined;
 
   const updateData = {
     ...(fullName && { fullName }),
     ...(username && { username }),
-    ...(avatarPath && { avatar: `${process.env.SERVER_URL}${avatarPath}` }),
+    ...(avatarPath && { avatar: avatarPath }), // ✅ Store relative path only
   };
+
 
   const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
     new: true,

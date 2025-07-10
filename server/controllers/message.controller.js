@@ -8,8 +8,6 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
   const senderId = req.user._id;
   const receiverId = req.params.receiverId;
   const message = req.body.message?.trim() || "";
-  const msg = await Message.findOne({ file: { $ne: null } });
-  console.log("📦 Sample message from DB:", msg);
 
   console.log("📩 Incoming request:", {
     body: req.body,
@@ -17,7 +15,7 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
   });
 
   const file = req.file
-    ? `${process.env.SERVER_URL}/uploads/messages/${req.file.filename}`
+    ? `uploads/messages/${req.file.filename}` // ✅ Store relative path only
     : null;
 
   if (!senderId || !receiverId || (!message && !file)) {
@@ -46,7 +44,6 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
     await conversation.save();
   }
 
-  // Send message only to receiver
   const socketId = getSocketId(receiverId);
   if (socketId) {
     io.to(socketId).emit("newMessage", newMessage);
@@ -57,6 +54,7 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
     responseData: newMessage,
   });
 });
+
 
 export const getMessages = asyncHandler(async (req, res, next) => {
   const myId = req.user._id;
