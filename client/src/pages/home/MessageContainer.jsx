@@ -48,7 +48,7 @@ const MessageContainer = () => {
     return () => {
       socket.off("newMessage", handleNewMessage);
     };
-  }, [socket, dispatch, userProfile?._id]);
+  }, [socket]); 
 
   return (
     <>
