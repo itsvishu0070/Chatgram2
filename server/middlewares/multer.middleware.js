@@ -1,7 +1,7 @@
 // middlewares/upload.js
 import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
-import cloudinary from "../utilities/cloudinary"; 
+import cloudinary from "../utilities/cloudinary.js";
 
 // ========== Avatar Upload ========== //
 const avatarStorage = new CloudinaryStorage({
