@@ -1,7 +1,7 @@
 import express from "express";
-import { isAuthenticated } from "../middlewares/auth.middlware.js";
+import { isAuthenticated } from "../middlewares/auth.middleware.js";
 import { getMessages, sendMessage } from "../controllers/message.controller.js";
-import { uploadMessageAttachment } from "../middlewares/upload.js"; 
+import { uploadMessageAttachment } from "../middlewares/upload.js";
 
 const router = express.Router();
 
