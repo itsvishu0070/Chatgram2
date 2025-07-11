@@ -171,16 +171,13 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
     }
   }
 
-  const avatarPath = req.file
-    ? `uploads/avatars/${req.file.filename}` // ✅ No leading slash, no SERVER_URL
-    : undefined;
+  const avatarPath = req.file?.path; // ✅ Cloudinary URL
 
   const updateData = {
     ...(fullName && { fullName }),
     ...(username && { username }),
-    ...(avatarPath && { avatar: avatarPath }), // ✅ Store relative path only
+    ...(avatarPath && { avatar: avatarPath }),
   };
-
 
   const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
     new: true,
@@ -196,4 +193,3 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
     },
   });
 });
-

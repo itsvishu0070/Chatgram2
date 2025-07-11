@@ -14,9 +14,7 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
     file: req.file,
   });
 
-  const file = req.file
-    ? `uploads/messages/${req.file.filename}` // ✅ Store relative path only
-    : null;
+  const file = req.file?.path || null; // ✅ Cloudinary URL
 
   if (!senderId || !receiverId || (!message && !file)) {
     return next(new errorHandler("Message or file is required", 400));

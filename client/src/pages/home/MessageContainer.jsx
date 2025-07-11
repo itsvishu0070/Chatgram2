@@ -1,14 +1,17 @@
-
 import React, { useEffect } from "react";
 import User from "./User";
 import Message from "./Message";
 import { useDispatch, useSelector } from "react-redux";
 import { getMessageThunk } from "../../store/slice/message/message.thunk";
 import SendMessage from "./SendMessage";
+import { socket } from "../../socket"; // 👈 update this path
+import { setNewMessage } from "../../store/slice/message/message.slice"; // 👈 update this path
 
 const MessageContainer = () => {
   const dispatch = useDispatch();
-  const { selectedUser } = useSelector((state) => state.userReducer);
+  const { selectedUser, userProfile } = useSelector(
+    (state) => state.userReducer
+  );
   const { messages } = useSelector((state) => state.messageReducer);
 
   useEffect(() => {
@@ -16,6 +19,33 @@ const MessageContainer = () => {
       dispatch(getMessageThunk({ recieverId: selectedUser._id }));
     }
   }, [selectedUser?._id]);
+
+  // ✅ Attach socket listener with filtering
+  useEffect(() => {
+    const handleNewMessage = (message) => {
+      const myId = userProfile?._id;
+
+      const receiverId =
+        typeof message.receiverId === "object"
+          ? message.receiverId._id
+          : message.receiverId;
+
+      const senderId =
+        typeof message.senderId === "object"
+          ? message.senderId._id
+          : message.senderId;
+
+      if (receiverId === myId || senderId === myId) {
+        dispatch(setNewMessage(message));
+      }
+    };
+
+    socket.on("newMessage", handleNewMessage);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+    };
+  }, [dispatch, userProfile?._id]);
 
   return (
     <>
@@ -52,4 +82,3 @@ const MessageContainer = () => {
 };
 
 export default MessageContainer;
-

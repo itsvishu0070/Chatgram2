@@ -1,40 +1,36 @@
+// middlewares/upload.js
 import multer from "multer";
-import path from "path";
-import fs from "fs";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../utils/cloudinary.js";
 
-// Ensure uploads directory exists
-// uploads/avatars
-const uploadDir = "./temp";
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Multer storage config
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    cb(null, `${Date.now()}-${file.fieldname}${ext}`);
+// ========== Avatar Upload ========== //
+const avatarStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "avatars",
+    allowed_formats: ["jpg", "png", "webp"],
+    public_id: (req, file) =>
+      `${Date.now()}-${file.originalname.split(".")[0]}`,
   },
 });
 
-// File filter (optional)
-const fileFilter = (req, file, cb) => {
-  if (
-    file.mimetype === "image/jpeg" ||
-    file.mimetype === "image/png" ||
-    file.mimetype === "image/webp"
-  ) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only images are allowed"), false);
-  }
-};
-
 export const uploadAvatar = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }, // max 2MB
+  storage: avatarStorage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // Max 2MB
+});
+
+// ========== Message Attachment Upload ========== //
+const messageStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "messages",
+    allowed_formats: ["jpg", "png", "webp", "mp4", "pdf"],
+    public_id: (req, file) =>
+      `${Date.now()}-${file.originalname.split(".")[0]}`,
+  },
+});
+
+export const uploadMessageAttachment = multer({
+  storage: messageStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // Max 10MB
 });
