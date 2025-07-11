@@ -4,7 +4,7 @@ import Message from "./Message";
 import { useDispatch, useSelector } from "react-redux";
 import { getMessageThunk } from "../../store/slice/message/message.thunk";
 import SendMessage from "./SendMessage";
-import { socket } from "../../socket"; // 👈 update this path
+
 import { setNewMessage } from "../../store/slice/message/message.slice"; // 👈 update this path
 
 const MessageContainer = () => {
