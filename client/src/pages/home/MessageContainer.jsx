@@ -4,8 +4,7 @@ import Message from "./Message";
 import { useDispatch, useSelector } from "react-redux";
 import { getMessageThunk } from "../../store/slice/message/message.thunk";
 import SendMessage from "./SendMessage";
-
-import { setNewMessage } from "../../store/slice/message/message.slice"; // 👈 update this path
+import { setNewMessage } from "../../store/slice/message/message.slice";
 
 const MessageContainer = () => {
   const dispatch = useDispatch();
@@ -13,15 +12,19 @@ const MessageContainer = () => {
     (state) => state.userReducer
   );
   const { messages } = useSelector((state) => state.messageReducer);
+  const { socket } = useSelector((state) => state.socketReducer); // ✅ Redux socket
 
+  // 📨 Load previous messages on user select
   useEffect(() => {
     if (selectedUser?._id) {
       dispatch(getMessageThunk({ recieverId: selectedUser._id }));
     }
   }, [selectedUser?._id]);
 
-  // ✅ Attach socket listener with filtering
+  // 🔁 Listen to socket messages
   useEffect(() => {
+    if (!socket) return;
+
     const handleNewMessage = (message) => {
       const myId = userProfile?._id;
 
@@ -45,7 +48,7 @@ const MessageContainer = () => {
     return () => {
       socket.off("newMessage", handleNewMessage);
     };
-  }, [dispatch, userProfile?._id]);
+  }, [socket, dispatch, userProfile?._id]);
 
   return (
     <>
@@ -74,6 +77,7 @@ const MessageContainer = () => {
               ))}
           </div>
 
+          {/* Send Message */}
           <SendMessage />
         </div>
       )}
