@@ -9,25 +9,18 @@ import dotenv from "dotenv";
 dotenv.config();
 connectDB();
 
-// ✅ Step 1: Manual headers (needed for CORS with credentials)
-// app.use((req, res, next) => {
-//   res.header("Access-Control-Allow-Origin", process.env.CLIENT_URL);
-//   res.header("Access-Control-Allow-Credentials", "true");
-//   res.header(
-//     "Access-Control-Allow-Headers",
-//     "Origin, X-Requested-With, Content-Type, Accept"
-//   );
-//   res.header(
-//     "Access-Control-Allow-Methods",
-//     "GET, POST, PATCH, DELETE, OPTIONS"
-//   );
-//   next();
-// });
+// ✅ Stable CORS setup with whitelist
+const whitelist = ["https://chatgram2.vercel.app"];
 
-// ✅ Step 2: Proper CORS setup
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: function (origin, callback) {
+      if (!origin || whitelist.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
@@ -37,6 +30,11 @@ app.use(cookieParser());
 
 // ✅ Static files
 app.use("/uploads", express.static(path.join(path.resolve(), "uploads")));
+
+// ✅ Root route for uptime monitoring
+app.get("/", (req, res) => {
+  res.send("✅ Chatgram backend is running");
+});
 
 // ✅ Routes
 import userRoute from "./routes/user.route.js";
