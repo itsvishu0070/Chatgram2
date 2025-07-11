@@ -4,22 +4,18 @@ import { asyncHandler } from "../utilities/asyncHandler.utility.js";
 import { errorHandler } from "../utilities/errorHandler.utility.js";
 import { getSocketId, io } from "../socket/socket.js";
 
+// ======================== SEND MESSAGE ========================
 export const sendMessage = asyncHandler(async (req, res, next) => {
   const senderId = req.user._id;
   const receiverId = req.params.receiverId;
   const message = req.body.message?.trim() || "";
-
-  console.log("📩 Incoming request:", {
-    body: req.body,
-    file: req.file,
-  });
-
-  const file = req.file?.path || null; // ✅ Cloudinary URL
+  const file = req.file?.path || null; // ✅ Cloudinary file URL
 
   if (!senderId || !receiverId || (!message && !file)) {
     return next(new errorHandler("Message or file is required", 400));
   }
 
+  // Check or create conversation
   let conversation = await Conversation.findOne({
     participants: { $all: [senderId, receiverId] },
   });
@@ -30,6 +26,7 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
     });
   }
 
+  // Create new message
   const newMessage = await Message.create({
     senderId,
     receiverId,
@@ -37,11 +34,13 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
     file,
   });
 
+  // Push message into conversation
   if (newMessage) {
     conversation.messages.push(newMessage._id);
     await conversation.save();
   }
 
+  // Emit message via socket
   const socketId = getSocketId(receiverId);
   if (socketId) {
     io.to(socketId).emit("newMessage", newMessage);
@@ -53,7 +52,7 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
   });
 });
 
-
+// ======================== GET MESSAGES ========================
 export const getMessages = asyncHandler(async (req, res, next) => {
   const myId = req.user._id;
   const otherParticipantId = req.params.otherParticipantId;

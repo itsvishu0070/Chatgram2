@@ -4,17 +4,17 @@ import { errorHandler } from "../utilities/errorHandler.utility.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-// =========================== attachCookie ===========================
+// ================= attachCookie =================
 const attachCookie = (res, token) => {
   res.cookie("token", token, {
     httpOnly: true,
-    secure: true, // ✅ Always true in production
-    sameSite: "None", // ✅ Required for cross-origin (Render <-> Vercel)
+    secure: true, // ✅ Must be true in prod (HTTPS)
+    sameSite: "None", // ✅ Required for cross-origin cookies
     maxAge: Number(process.env.COOKIE_EXPIRES) * 24 * 60 * 60 * 1000,
   });
 };
 
-// =========================== REGISTER ===========================
+// ================= REGISTER =================
 export const register = asyncHandler(async (req, res, next) => {
   const { fullName, username, password, gender } = req.body;
 
@@ -32,8 +32,8 @@ export const register = asyncHandler(async (req, res, next) => {
   const avatar = `https://avatar.iran.liara.run/public/${avatarType}?username=${username}`;
 
   const newUser = await User.create({
-    username,
     fullName,
+    username,
     password: hashedPassword,
     gender,
     avatar,
@@ -48,18 +48,15 @@ export const register = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     responseData: {
-      newUser: {
-        ...newUser.toObject(),
-        avatar: newUser.avatar?.startsWith("http")
-          ? newUser.avatar
-          : `${process.env.SERVER_URL}${newUser.avatar}`,
-      },
-      token,
+      ...newUser.toObject(),
+      avatar: newUser.avatar?.startsWith("http")
+        ? newUser.avatar
+        : `${process.env.SERVER_URL}${newUser.avatar}`,
     },
   });
 });
 
-// =========================== LOGIN ===========================
+// ================= LOGIN =================
 export const login = asyncHandler(async (req, res, next) => {
   const { username, password } = req.body;
 
@@ -92,22 +89,19 @@ export const login = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     responseData: {
-      user: {
-        ...user.toObject(),
-        avatar: user.avatar?.startsWith("http")
-          ? user.avatar
-          : `${process.env.SERVER_URL}${user.avatar}`,
-      },
-      token,
+      ...user.toObject(),
+      avatar: user.avatar?.startsWith("http")
+        ? user.avatar
+        : `${process.env.SERVER_URL}${user.avatar}`,
     },
   });
 });
 
-// =========================== GET PROFILE ===========================
+// ================= GET PROFILE =================
 export const getProfile = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
-  const profile = await User.findById(userId);
 
+  const profile = await User.findById(userId);
   if (!profile) return next(new errorHandler("User not found", 404));
 
   res.status(200).json({
@@ -121,27 +115,26 @@ export const getProfile = asyncHandler(async (req, res, next) => {
   });
 });
 
-// =========================== LOGOUT ===========================
+// ================= LOGOUT =================
 export const logout = asyncHandler(async (req, res, next) => {
-  res
-    .cookie("token", "", {
-      httpOnly: true,
-      secure: true, // ✅ Always true in prod
-      sameSite: "None", // ✅ Cross-origin clear
-      expires: new Date(0),
-    })
-    .status(200)
-    .json({
-      success: true,
-      message: "Logout successful!",
-    });
+  res.cookie("token", "", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+    expires: new Date(0),
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Logout successful!",
+  });
 });
 
-// =========================== GET OTHER USERS ===========================
+// ================= GET OTHER USERS =================
 export const getOtherUsers = asyncHandler(async (req, res, next) => {
   const otherUsers = await User.find({ _id: { $ne: req.user._id } });
 
-  const usersWithFullAvatars = otherUsers.map((user) => ({
+  const usersWithAvatars = otherUsers.map((user) => ({
     ...user.toObject(),
     avatar: user.avatar?.startsWith("http")
       ? user.avatar
@@ -150,11 +143,11 @@ export const getOtherUsers = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    responseData: usersWithFullAvatars,
+    responseData: usersWithAvatars,
   });
 });
 
-// =========================== UPDATE PROFILE ===========================
+// ================= UPDATE PROFILE =================
 export const updateProfile = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
   const { fullName, username } = req.body;
@@ -165,21 +158,21 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
   }
 
   if (username && username !== currentUser.username) {
-    const existingUser = await User.findOne({ username });
-    if (existingUser && existingUser._id.toString() !== userId.toString()) {
+    const usernameTaken = await User.findOne({ username });
+    if (usernameTaken && usernameTaken._id.toString() !== userId.toString()) {
       return next(new errorHandler("Username already taken", 400));
     }
   }
 
-  const avatarPath = req.file?.path; // ✅ Cloudinary URL
+  const avatarPath = req.file?.path; // ✅ Cloudinary uploaded URL
 
-  const updateData = {
+  const updatedFields = {
     ...(fullName && { fullName }),
     ...(username && { username }),
     ...(avatarPath && { avatar: avatarPath }),
   };
 
-  const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+  const updatedUser = await User.findByIdAndUpdate(userId, updatedFields, {
     new: true,
   });
 
