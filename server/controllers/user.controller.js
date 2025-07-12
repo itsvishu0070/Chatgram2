@@ -154,7 +154,7 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
     }
   }
 
-  const avatarPath = req.file?.path; // ✅ Cloudinary uploaded URL
+  const avatarPath = req.file?.secure_url || req.file?.path || null;
 
   const updatedFields = {
     ...(fullName && { fullName }),

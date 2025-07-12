@@ -14,43 +14,38 @@ const Message = ({ messageDetails }) => {
     }
   }, []);
 
-  const formattedTime = messageDetails?.createdAt
-    ? moment(messageDetails.createdAt).format("hh:mm A")
-    : "";
+  const formattedTime = moment(messageDetails?.createdAt).format("hh:mm A");
 
   const isSender =
     userProfile?._id === messageDetails?.senderId?._id ||
     userProfile?._id === messageDetails?.senderId;
 
   const avatar = isSender ? userProfile?.avatar : selectedUser?.avatar;
+  const fallbackAvatar = "/fallback-image.png"; // Optional default
 
-  // ✅ Safe file URL construction
-  const baseUrl = import.meta.env.VITE_SERVER_URL || "";
   const filePath = messageDetails?.file;
-
   const fileUrl =
-    filePath && typeof filePath === "string" && filePath.trim() !== ""
-      ? filePath.startsWith("http")
-        ? filePath
-        : `${baseUrl.replace(/\/$/, "")}/${filePath.replace(/^\//, "")}`
+    typeof filePath === "string" && filePath.startsWith("http")
+      ? filePath
       : null;
 
   const renderFilePreview = () => {
     if (!fileUrl) return null;
 
-    const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(fileUrl);
-    const isPDF = /\.pdf$/i.test(fileUrl);
-    const isVideo = /\.(mp4|webm|ogg)$/i.test(fileUrl);
+    const extension = fileUrl.split(".").pop().toLowerCase();
+    const isImage = ["jpg", "jpeg", "png", "webp", "gif"].includes(extension);
+    const isVideo = ["mp4", "webm", "ogg"].includes(extension);
+    const isPDF = extension === "pdf";
 
     if (isImage) {
       return (
         <img
           src={fileUrl}
-          alt="Image attachment"
-          className="max-w-[200px] rounded-lg mt-2 border border-white/10"
+          alt="attachment"
+          className="max-w-[200px] mt-2 rounded-lg border border-white/10"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = "/fallback-image.png"; // Optional fallback
+            e.target.src = fallbackAvatar;
           }}
         />
       );
@@ -86,7 +81,7 @@ const Message = ({ messageDetails }) => {
         rel="noopener noreferrer"
         className="text-sm underline text-blue-400 mt-2 inline-block"
       >
-        📎 Download Attachment
+        📎 Download File
       </a>
     );
   };
@@ -98,7 +93,14 @@ const Message = ({ messageDetails }) => {
     >
       <div className="chat-image avatar">
         <div className="w-10 rounded-full">
-          <img alt="user avatar" src={avatar} />
+          <img
+            src={avatar || fallbackAvatar}
+            alt="user avatar"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = fallbackAvatar;
+            }}
+          />
         </div>
       </div>
 
@@ -106,7 +108,7 @@ const Message = ({ messageDetails }) => {
         <time className="text-xs opacity-50">{formattedTime}</time>
       </div>
 
-      <div className="chat-bubble max-w-[80%]">
+      <div className="chat-bubble whitespace-pre-wrap break-words">
         {messageDetails?.message}
         {renderFilePreview()}
       </div>

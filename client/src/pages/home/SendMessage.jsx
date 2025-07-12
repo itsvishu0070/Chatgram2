@@ -45,8 +45,10 @@ const SendMessage = () => {
     if (selected) {
       setFile(selected);
       setFileName(selected.name);
+      e.target.value = ""; // reset
     }
   };
+
 
   return (
     <div className="w-full px-4 py-3 bg-[#101218] border-t border-white/10">
