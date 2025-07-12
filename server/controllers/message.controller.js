@@ -8,10 +8,14 @@ import { getSocketId, io } from "../socket/socket.js";
 export const sendMessage = asyncHandler(async (req, res, next) => {
   const senderId = req.user._id;
   const receiverId = req.params.receiverId;
-  const message = req.body.message?.trim() || "";
-  const file = req.file?.path || null; // ✅ Cloudinary file URL
+  const messageText = req.body.message?.trim() || "";
 
-  if (!senderId || !receiverId || (!message && !file)) {
+  console.log("✅ req.body:", req.body);
+  console.log("✅ req.file:", req.file);
+
+  const fileUrl = req.file?.path || null; // ✅ Cloudinary gives a CDN URL in `path`
+
+  if (!senderId || !receiverId || (!messageText && !fileUrl)) {
     return next(new errorHandler("Message or file is required", 400));
   }
 
@@ -26,21 +30,16 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
     });
   }
 
-  // Create new message
   const newMessage = await Message.create({
     senderId,
     receiverId,
-    message,
-    file,
+    message: messageText,
+    file: fileUrl,
   });
 
-  // Push message into conversation
-  if (newMessage) {
-    conversation.messages.push(newMessage._id);
-    await conversation.save();
-  }
+  conversation.messages.push(newMessage._id);
+  await conversation.save();
 
-  // Emit message via socket
   const socketId = getSocketId(receiverId);
   if (socketId) {
     io.to(socketId).emit("newMessage", newMessage);

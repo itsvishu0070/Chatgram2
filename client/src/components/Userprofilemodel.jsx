@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 const UserProfileModal = ({ isOpen, onClose, user }) => {
   const dispatch = useDispatch();
   const [editMode, setEditMode] = useState(false);
+
   const [formData, setFormData] = useState({
     fullName: user?.fullName || "",
     username: user?.username || "",
@@ -21,12 +22,14 @@ const UserProfileModal = ({ isOpen, onClose, user }) => {
   );
 
   useEffect(() => {
-    setFormData({
-      fullName: user?.fullName || "",
-      username: user?.username || "",
-      avatar: user?.avatar || "",
-    });
-    setPreviewImage(user?.avatar || "/default-avatar.png");
+    if (user) {
+      setFormData({
+        fullName: user.fullName || "",
+        username: user.username || "",
+        avatar: user.avatar || "",
+      });
+      setPreviewImage(user.avatar || "/default-avatar.png");
+    }
   }, [user]);
 
   if (!isOpen || !user) return null;
@@ -64,14 +67,12 @@ const UserProfileModal = ({ isOpen, onClose, user }) => {
 
       await dispatch(updateProfileThunk(form)).unwrap();
 
-      // ✅ Fresh user data with updated avatar
       const { responseData } = await dispatch(getUserProfileThunk()).unwrap();
 
       toast.success("Profile updated!");
 
-      // ✅ Force fresh avatar preview to break browser cache
+      // Update preview and exit edit mode
       setPreviewImage(`${responseData.avatar}?t=${Date.now()}`);
-
       setEditMode(false);
       onClose();
     } catch (err) {
@@ -79,12 +80,17 @@ const UserProfileModal = ({ isOpen, onClose, user }) => {
     }
   };
 
-  const avatarUrl =
-    typeof previewImage === "string" && previewImage.startsWith("data:")
-      ? previewImage // local preview from upload
-      : previewImage?.startsWith("http")
-      ? previewImage
-      : `${import.meta.env.VITE_SERVER_URL}${previewImage || ""}`;
+  const avatarUrl = (() => {
+    if (typeof previewImage === "string") {
+      if (previewImage.startsWith("data:")) return previewImage; // Local preview
+      if (previewImage.startsWith("http"))
+        return `${previewImage}?t=${Date.now()}`; // Cloudinary or hosted
+      return `${
+        import.meta.env.VITE_SERVER_URL
+      }${previewImage}?t=${Date.now()}`;
+    }
+    return "/default-avatar.png";
+  })();
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
@@ -100,7 +106,7 @@ const UserProfileModal = ({ isOpen, onClose, user }) => {
           <div className="relative flex flex-col items-center">
             <img
               key={avatarUrl}
-              src={`${avatarUrl}?t=${Date.now()}`}
+              src={avatarUrl}
               alt="avatar"
               className="w-24 h-24 rounded-full ring-4 ring-[#7480FF]/50 object-cover"
             />
@@ -162,8 +168,6 @@ const UserProfileModal = ({ isOpen, onClose, user }) => {
                     username: user.username,
                     avatar: user.avatar,
                   });
-
-                  // ✅ Also refresh preview again
                   setPreviewImage(`${user.avatar}?t=${Date.now()}`);
                 }}
                 className="bg-red-500 hover:bg-red-600 py-2 px-4 rounded-lg text-sm font-semibold transition-all"

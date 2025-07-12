@@ -8,10 +8,20 @@ import jwt from "jsonwebtoken";
 const attachCookie = (res, token) => {
   res.cookie("token", token, {
     httpOnly: true,
-    secure: true, // ✅ Must be true in prod (HTTPS)
-    sameSite: "None", // ✅ Required for cross-origin cookies
+    secure: true,
+    sameSite: "None", // ✅ Required for cross-site cookie usage
     maxAge: Number(process.env.COOKIE_EXPIRES) * 24 * 60 * 60 * 1000,
   });
+};
+
+// ================= formatUserWithAvatar =================
+const formatUserWithAvatar = (user) => {
+  return {
+    ...user.toObject(),
+    avatar: user.avatar?.startsWith("http")
+      ? user.avatar
+      : `${process.env.SERVER_URL}${user.avatar || ""}`,
+  };
 };
 
 // ================= REGISTER =================
@@ -47,12 +57,7 @@ export const register = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    responseData: {
-      ...newUser.toObject(),
-      avatar: newUser.avatar?.startsWith("http")
-        ? newUser.avatar
-        : `${process.env.SERVER_URL}${newUser.avatar}`,
-    },
+    responseData: formatUserWithAvatar(newUser),
   });
 });
 
@@ -88,12 +93,7 @@ export const login = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    responseData: {
-      ...user.toObject(),
-      avatar: user.avatar?.startsWith("http")
-        ? user.avatar
-        : `${process.env.SERVER_URL}${user.avatar}`,
-    },
+    responseData: formatUserWithAvatar(user),
   });
 });
 
@@ -106,12 +106,7 @@ export const getProfile = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    responseData: {
-      ...profile.toObject(),
-      avatar: profile.avatar?.startsWith("http")
-        ? profile.avatar
-        : `${process.env.SERVER_URL}${profile.avatar}`,
-    },
+    responseData: formatUserWithAvatar(profile),
   });
 });
 
@@ -134,12 +129,7 @@ export const logout = asyncHandler(async (req, res, next) => {
 export const getOtherUsers = asyncHandler(async (req, res, next) => {
   const otherUsers = await User.find({ _id: { $ne: req.user._id } });
 
-  const usersWithAvatars = otherUsers.map((user) => ({
-    ...user.toObject(),
-    avatar: user.avatar?.startsWith("http")
-      ? user.avatar
-      : `${process.env.SERVER_URL}${user.avatar}`,
-  }));
+  const usersWithAvatars = otherUsers.map(formatUserWithAvatar);
 
   res.status(200).json({
     success: true,
@@ -178,11 +168,6 @@ export const updateProfile = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    responseData: {
-      ...updatedUser.toObject(),
-      avatar: updatedUser.avatar?.startsWith("http")
-        ? updatedUser.avatar
-        : `${process.env.SERVER_URL}${updatedUser.avatar}`,
-    },
+    responseData: formatUserWithAvatar(updatedUser),
   });
 });

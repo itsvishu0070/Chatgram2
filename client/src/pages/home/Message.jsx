@@ -14,7 +14,9 @@ const Message = ({ messageDetails }) => {
     }
   }, []);
 
-  const formattedTime = moment(messageDetails?.createdAt).format("hh:mm A");
+  const formattedTime = messageDetails?.createdAt
+    ? moment(messageDetails.createdAt).format("hh:mm A")
+    : "";
 
   const isSender =
     userProfile?._id === messageDetails?.senderId?._id ||
@@ -25,14 +27,13 @@ const Message = ({ messageDetails }) => {
   // ✅ Safe file URL construction
   const baseUrl = import.meta.env.VITE_SERVER_URL || "";
   const filePath = messageDetails?.file;
+
   const fileUrl =
-    filePath && typeof filePath === "string"
+    filePath && typeof filePath === "string" && filePath.trim() !== ""
       ? filePath.startsWith("http")
         ? filePath
         : `${baseUrl.replace(/\/$/, "")}/${filePath.replace(/^\//, "")}`
       : null;
-
-  console.log("fileUrl →", fileUrl); // ✅ Debug
 
   const renderFilePreview = () => {
     if (!fileUrl) return null;
@@ -47,6 +48,10 @@ const Message = ({ messageDetails }) => {
           src={fileUrl}
           alt="Image attachment"
           className="max-w-[200px] rounded-lg mt-2 border border-white/10"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "/fallback-image.png"; // Optional fallback
+          }}
         />
       );
     }
@@ -101,7 +106,7 @@ const Message = ({ messageDetails }) => {
         <time className="text-xs opacity-50">{formattedTime}</time>
       </div>
 
-      <div className="chat-bubble">
+      <div className="chat-bubble max-w-[80%]">
         {messageDetails?.message}
         {renderFilePreview()}
       </div>
